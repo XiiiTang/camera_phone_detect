@@ -17,6 +17,19 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Database initialization
 const db = new sqlite3.Database('./ai_responses.db');
 
+// Helper function to get UTC+8 timestamp string for database
+function getUTC8TimestampString() {
+    const now = new Date();
+    const utc8Time = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+    return utc8Time.toISOString().replace('T', ' ').replace('Z', '');
+}
+
+// Helper function to get UTC+8 Date object
+function getUTC8Date() {
+    const now = new Date();
+    return new Date(now.getTime() + (8 * 60 * 60 * 1000));
+}
+
 // Create table if not exists
 db.run(`CREATE TABLE IF NOT EXISTS ai_responses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -29,35 +42,48 @@ db.run(`CREATE TABLE IF NOT EXISTS ai_responses (
 
 // WebSocket connection for real-time updates
 wss.on('connection', (ws) => {
-    console.log('Client connected for real-time updates');
-    
+    const connectTime = getUTC8Date();
+    console.log(`[${connectTime.toISOString()}] Client connected for real-time updates`);
+
     ws.on('close', () => {
-        console.log('Client disconnected');
+        const disconnectTime = getUTC8Date();
+        console.log(`[${disconnectTime.toISOString()}] Client disconnected`);
     });
 });
 
 // API endpoint to save AI response
 app.post('/api/save-response', (req, res) => {
     const { question, response, imageSize, processingTime } = req.body;
-    
-    const stmt = db.prepare(`INSERT INTO ai_responses (question, response, image_size, processing_time) 
-                            VALUES (?, ?, ?, ?)`);
-    
-    stmt.run([question, response, imageSize, processingTime], function(err) {
+
+    // Get UTC+8 timestamp for database insertion
+    const utc8Timestamp = getUTC8TimestampString();
+
+    const stmt = db.prepare(`INSERT INTO ai_responses (timestamp, question, response, image_size, processing_time)
+                            VALUES (?, ?, ?, ?, ?)`);
+
+    stmt.run([utc8Timestamp, question, response, imageSize, processingTime], function(err) {
         if (err) {
             console.error('Database error:', err);
             return res.status(500).json({ error: 'Database error' });
         }
-        
+
+        // Create UTC+8 timestamp for response
+        const utc8Time = getUTC8Date();
+        // Use the same format as database for consistency
+        const utc8TimestampString = getUTC8TimestampString();
+
         const responseData = {
             id: this.lastID,
-            timestamp: new Date().toISOString(),
+            timestamp: utc8TimestampString,
             question,
             response,
             imageSize,
             processingTime
         };
-        
+
+        // Log the save operation with UTC+8 time
+        console.log(`[${utc8Time.toISOString()}] Saved response: ${response} (ID: ${this.lastID})`);
+
         // Broadcast to all connected clients
         wss.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
@@ -67,10 +93,10 @@ app.post('/api/save-response', (req, res) => {
                 }));
             }
         });
-        
+
         res.json({ success: true, id: this.lastID });
     });
-    
+
     stmt.finalize();
 });
 
@@ -112,8 +138,8 @@ app.delete('/api/responses', (req, res) => {
 
 // API endpoint to get phone usage statistics
 app.get('/api/phone-stats', (req, res) => {
-    // Get all responses ordered by timestamp DESC (newest first)
-    db.all(`SELECT timestamp, response FROM ai_responses ORDER BY timestamp DESC`, (err, rows) => {
+    // Get all responses ordered by ID DESC (newest first) to ensure correct ordering
+    db.all(`SELECT timestamp, response FROM ai_responses ORDER BY id DESC`, (err, rows) => {
         if (err) {
             console.error('Database error:', err);
             return res.status(500).json({ error: 'Database error' });
@@ -150,11 +176,24 @@ function calculateContinuousTime(rows) {
     let continuousTime = 0;
 
     // Convert timestamps to Date objects
-    // SQLite stores timestamps as local time, so we treat them as UTC+8
-    const responses = rows.map(row => ({
-        timestamp: new Date(row.timestamp), // Treat as local time (UTC+8)
-        response: row.response.toLowerCase().trim()
-    }));
+    // Parse timestamps as UTC+8 time
+    const responses = rows.map(row => {
+        // If timestamp is in ISO format, parse it directly
+        // If timestamp is in SQLite format, convert it
+        let timestamp;
+        if (row.timestamp.includes('T')) {
+            timestamp = new Date(row.timestamp);
+        } else {
+            // SQLite datetime format: "YYYY-MM-DD HH:MM:SS"
+            // Treat as UTC+8 time
+            timestamp = new Date(row.timestamp + '+08:00');
+        }
+
+        return {
+            timestamp: timestamp,
+            response: row.response.toLowerCase().trim()
+        };
+    });
 
     // Start from the latest response and work backwards
     for (let i = 1; i < responses.length; i++) {
@@ -212,7 +251,10 @@ function calculateContinuousTime(rows) {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', timestamp: new Date().toISOString() });
+    // Return UTC+8 timestamp
+    const utc8Time = getUTC8Date();
+    console.log(`[${utc8Time.toISOString()}] Health check requested`);
+    res.json({ status: 'OK', timestamp: utc8Time.toISOString() });
 });
 
 // Serve index.html for root route
@@ -222,8 +264,10 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Access the app at: http://localhost:${PORT}`);
+    const startTime = getUTC8Date();
+    console.log(`[${startTime.toISOString()}] Server running on port ${PORT}`);
+    console.log(`[${startTime.toISOString()}] Access the app at: http://localhost:${PORT}`);
+    console.log(`[${startTime.toISOString()}] Current UTC+8 time: ${startTime.toISOString()}`);
 });
 
 // Graceful shutdown

@@ -24,14 +24,14 @@ if not exist node_modules (
 
 REM Start AI backend server in new window
 echo Starting AI backend server...
-start "AI Backend Server" cmd /c "cd /d D:\llamacpp\llama.cpp\build\bin && .\llama-server -hf ggml-org/Qwen2.5-VL-7B-Instruct-GGUF"
+start "AI Backend Server" cmd /k "cd /d D:\llamacpp\llama.cpp\build\bin && .\llama-server -hf ggml-org/Qwen2.5-VL-7B-Instruct-GGUF || pause"
 
 REM Wait a moment for AI server to start
 timeout /t 5 /nobreak >nul
 
 REM Start Node.js backend server in new window
 echo Starting Node.js backend server...
-start "Node.js Backend Server" cmd /c "node server.js"
+start "Node.js Backend Server" cmd /k "node server.js || pause"
 
 REM Wait a moment for Node.js server to start
 timeout /t 3 /nobreak >nul
