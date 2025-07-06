@@ -244,6 +244,97 @@ body {
     border: 1px solid #bee5eb;
 }
 
+/* Phone Usage Statistics Styles */
+.stats-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border: 1px solid #e9ecef;
+}
+
+.stats-section h3 {
+    margin: 0 0 15px 0;
+    color: #495057;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.stat-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.stat-phone {
+    border-color: #dc3545;
+}
+
+.stat-phone.active {
+    background-color: #f8d7da;
+    border-color: #dc3545;
+}
+
+.stat-no-phone {
+    border-color: #28a745;
+}
+
+.stat-no-phone.active {
+    background-color: #d4edda;
+    border-color: #28a745;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #495057;
+}
+
+.stat-phone .stat-value {
+    color: #dc3545;
+}
+
+.stat-no-phone .stat-value {
+    color: #28a745;
+}
+
+.stats-info {
+    background-color: white;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-align: center;
+    border: 1px solid #e9ecef;
+}
+
+.stats-info div {
+    margin: 2px 0;
+}
+
 .logs-section {
     background-color: #f8f9fa;
     border-radius: 8px;
@@ -370,6 +461,19 @@ body {
     
     .btn {
         flex: none;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .stat-card {
+        padding: 12px;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
     }
 }
 

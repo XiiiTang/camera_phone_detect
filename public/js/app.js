@@ -3,15 +3,16 @@ class AppController {
         this.camera = new CameraManager();
         this.aiService = new AIService();
         this.dbService = new DatabaseService();
-        
+        this.phoneStats = new PhoneStatsService(this.dbService);
+
         this.isProcessing = false;
         this.processingInterval = null;
         this.currentInterval = 10000; // Default 10 seconds
-        
+
         this.elements = {};
         this.logs = [];
         this.maxLogs = 100;
-        
+
         this.init();
     }
 
@@ -19,10 +20,14 @@ class AppController {
         this.initializeElements();
         this.setupEventListeners();
         this.setupWebSocket();
-        
+
         try {
             await this.initializeCamera();
             await this.loadLogs();
+
+            // Start phone statistics service
+            this.phoneStats.start();
+
             this.updateStatus('Camera initialized successfully', 'success');
         } catch (error) {
             this.updateStatus(`Initialization failed: ${error.message}`, 'error');
@@ -103,10 +108,14 @@ class AppController {
     setupWebSocket() {
         this.dbService.onNewResponse = (data) => {
             this.addLogEntry(data);
+            // Trigger phone stats update when new response is received
+            this.phoneStats.triggerUpdate();
         };
 
         this.dbService.onClearResponses = () => {
             this.clearLogDisplay();
+            // Trigger phone stats update when responses are cleared
+            this.phoneStats.triggerUpdate();
         };
 
         this.dbService.onConnectionChange = (isConnected) => {
@@ -373,6 +382,7 @@ class AppController {
         this.camera.stopCamera();
         this.dbService.disconnect();
         this.aiService.stopHealthCheck();
+        this.phoneStats.stop();
     }
 }
 

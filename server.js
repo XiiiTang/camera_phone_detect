@@ -96,7 +96,7 @@ app.delete('/api/responses', (req, res) => {
             console.error('Database error:', err);
             return res.status(500).json({ error: 'Database error' });
         }
-        
+
         // Broadcast clear event
         wss.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
@@ -105,10 +105,110 @@ app.delete('/api/responses', (req, res) => {
                 }));
             }
         });
-        
+
         res.json({ success: true, deletedRows: this.changes });
     });
 });
+
+// API endpoint to get phone usage statistics
+app.get('/api/phone-stats', (req, res) => {
+    // Get all responses ordered by timestamp DESC (newest first)
+    db.all(`SELECT timestamp, response FROM ai_responses ORDER BY timestamp DESC`, (err, rows) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        if (rows.length === 0) {
+            return res.json({
+                currentContinuousPhoneTime: 0,
+                currentContinuousNoPhoneTime: 0,
+                lastResponse: null,
+                message: 'No data available'
+            });
+        }
+
+        // Calculate continuous time based on the specified logic
+        const stats = calculateContinuousTime(rows);
+        console.log('Phone stats calculated:', stats);
+        res.json(stats);
+    });
+});
+
+// Function to calculate continuous time based on the specified logic
+function calculateContinuousTime(rows) {
+    if (rows.length === 0) {
+        return {
+            currentContinuousPhoneTime: 0,
+            currentContinuousNoPhoneTime: 0,
+            lastResponse: null
+        };
+    }
+
+    const latestResponse = rows[0];
+    let continuousStartIndex = 0;
+    let continuousTime = 0;
+
+    // Convert timestamps to Date objects
+    // SQLite stores timestamps as local time, so we treat them as UTC+8
+    const responses = rows.map(row => ({
+        timestamp: new Date(row.timestamp), // Treat as local time (UTC+8)
+        response: row.response.toLowerCase().trim()
+    }));
+
+    // Start from the latest response and work backwards
+    for (let i = 1; i < responses.length; i++) {
+        const currentResponse = responses[i];
+        const previousResponse = responses[i - 1];
+
+        // Calculate time difference in seconds
+        const timeDiff = (previousResponse.timestamp - currentResponse.timestamp) / 1000;
+
+        // Check if time gap is too large (>20 seconds)
+        if (timeDiff > 20) {
+            // Time gap is too large, continuous period ends at the previous response (i-1)
+            // So we calculate from latest (index 0) to the response before the gap (index i-1)
+            continuousStartIndex = i - 1;
+            break;
+        }
+
+        // Check if response content is different
+        if (currentResponse.response !== previousResponse.response) {
+            // Content is different, continuous period is from latest response to this different response
+            // So we calculate from latest (index 0) to this different response (index i)
+            continuousStartIndex = i;
+            break;
+        }
+
+        // If we reach the end of the array, the continuous period includes all responses
+        if (i === responses.length - 1) {
+            continuousStartIndex = i;
+        }
+    }
+
+    // Calculate the continuous time from the latest response to the end of continuous period
+    if (continuousStartIndex > 0) {
+        continuousTime = (responses[0].timestamp - responses[continuousStartIndex].timestamp) / 1000;
+    } else {
+        // Only one response or all responses are continuous to the end
+        if (responses.length > 1) {
+            continuousTime = (responses[0].timestamp - responses[responses.length - 1].timestamp) / 1000;
+        } else {
+            continuousTime = 0;
+        }
+    }
+
+    // Determine if currently looking at phone or not
+    const isLookingAtPhone = latestResponse.response.toLowerCase().trim() === 'yes';
+
+    return {
+        currentContinuousPhoneTime: isLookingAtPhone ? Math.round(continuousTime) : 0,
+        currentContinuousNoPhoneTime: !isLookingAtPhone ? Math.round(continuousTime) : 0,
+        lastResponse: latestResponse.response,
+        lastTimestamp: latestResponse.timestamp,
+        continuousSeconds: Math.round(continuousTime)
+    };
+}
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

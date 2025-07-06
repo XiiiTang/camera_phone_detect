@@ -36,6 +36,24 @@
                     Initializing application...
                 </div>
 
+                <!-- Phone Usage Statistics -->
+                <div class="stats-section">
+                    <h3>手机使用统计</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card stat-phone">
+                            <div class="stat-label">当前连续看手机时长</div>
+                            <div class="stat-value" id="continuousPhoneTime">0秒</div>
+                        </div>
+                        <div class="stat-card stat-no-phone">
+                            <div class="stat-label">当前连续没看手机时长</div>
+                            <div class="stat-value" id="continuousNoPhoneTime">0秒</div>
+                        </div>
+                    </div>
+                    <div class="stats-info">
+                        <div id="lastUpdateTime">最后更新: --</div>
+                        <div id="lastResponse">最后响应: --</div>
+                    </div>
+                </div>
 
             </div>
 
@@ -86,6 +104,7 @@
     <script src="js/camera.js"></script>
     <script src="js/ai-service.js"></script>
     <script src="js/database-service.js"></script>
+    <script src="js/phone-stats.js"></script>
     <script src="js/app.js"></script>
 
     <style>

@@ -56,7 +56,7 @@ class DatabaseService {
             const response = await fetch(`${this.baseURL}/api/responses`, {
                 method: 'DELETE'
             });
-            
+
             if (!response.ok) {
                 throw new Error(`Failed to clear responses: ${response.status}`);
             }
@@ -64,6 +64,21 @@ class DatabaseService {
             return await response.json();
         } catch (error) {
             console.error('Error clearing responses:', error);
+            throw error;
+        }
+    }
+
+    async getPhoneStats() {
+        try {
+            const response = await fetch(`${this.baseURL}/api/phone-stats`);
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch phone stats: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching phone stats:', error);
             throw error;
         }
     }
