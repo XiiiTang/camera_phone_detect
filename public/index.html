@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Camera Recognition App</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI Camera Recognition App</h1>
+            <div id="connectionStatus" class="connection-status connection-offline">Disconnected</div>
+        </div>
+
+        <div class="main-content">
+            <div class="camera-section">
+                <div class="camera-controls">
+                    <div class="form-group">
+                        <label for="cameraSelect">Select Camera:</label>
+                        <select id="cameraSelect">
+                            <option value="">Loading cameras...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <button id="setDefaultCameraButton" class="btn btn-secondary">Set as Default</button>
+                    </div>
+                </div>
+
+                <div class="video-container">
+                    <video id="videoFeed" autoplay playsinline muted></video>
+                    <div id="videoOverlay" class="video-overlay">Loading...</div>
+                </div>
+
+                <div id="statusDisplay" class="status-display status-info">
+                    Initializing application...
+                </div>
+
+
+            </div>
+
+            <div class="control-panel">
+                <div class="config-section">
+                    <h3>AI Configuration</h3>
+                    <div class="form-group">
+                        <label for="aiURL">AI Server URL:</label>
+                        <input type="url" id="aiURL" value="http://localhost:8080" placeholder="http://localhost:8080">
+                    </div>
+                    <div class="form-group">
+                        <label for="questionText">Question:</label>
+                        <textarea id="questionText" placeholder="Enter your question...">Is any mobile phone in the image? Answer only with 'yes' or 'no'.</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="intervalSelect">Processing Interval:</label>
+                        <select id="intervalSelect">
+                            <option value="500">500ms</option>
+                            <option value="1000">1 second</option>
+                            <option value="2000">2 seconds</option>
+                            <option value="5000">5 seconds</option>
+                            <option value="10000">10 seconds</option>
+                        </select>
+                    </div>
+                    <div class="button-group">
+                        <button id="startButton" class="btn btn-success">Start Processing</button>
+                    </div>
+                </div>
+
+                <div class="logs-section">
+                    <div class="logs-header">
+                        <h3>Response Logs</h3>
+                        <button id="clearLogsButton" class="btn btn-secondary">Clear Logs</button>
+                    </div>
+                    <div class="logs-content" id="logsContent">
+                        <div class="log-entry">
+                            <div class="log-timestamp">Waiting for first response...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="canvas" class="hidden"></canvas>
+
+    <!-- JavaScript modules -->
+    <script src="js/camera.js"></script>
+    <script src="js/ai-service.js"></script>
+    <script src="js/database-service.js"></script>
+    <script src="js/app.js"></script>
+
+    <style>
+        .log-meta {
+            font-size: 11px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+</body>
+</html>

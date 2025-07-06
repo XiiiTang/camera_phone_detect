@@ -1,0 +1,42 @@
+{
+  "ai": {
+    "baseURL": "http://localhost:8080",
+    "defaultQuestion": "Is any mobile phone in the image? Answer only with 'yes' or 'no'.",
+    "maxTokens": 10,
+    "temperature": 0.1,
+    "healthCheckInterval": 10000
+  },
+  "camera": {
+    "defaultResolution": {
+      "width": 1920,
+      "height": 1080
+    },
+    "defaultConstraints": {
+      "video": {
+        "width": { "ideal": 1920 },
+        "height": { "ideal": 1080 },
+        "facingMode": "environment"
+      },
+      "audio": false
+    },
+    "defaultDeviceId": null
+  },
+  "processing": {
+    "defaultInterval": 1000,
+    "availableIntervals": [500, 1000, 2000, 5000, 10000]
+  },
+  "database": {
+    "filename": "ai_responses.db",
+    "maxLogs": 100
+  },
+  "server": {
+    "port": 3000,
+    "corsEnabled": true,
+    "maxPayloadSize": "50mb"
+  },
+  "paths": {
+    "aiBackend": "D:\\llamacpp\\llama.cpp\\build\\bin",
+    "aiExecutable": "llama-server",
+    "aiModel": "ggml-org/Qwen2.5-VL-7B-Instruct-GGUF"
+  }
+}

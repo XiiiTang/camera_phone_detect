@@ -1,0 +1,379 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.header {
+    background-color: #2c3e50;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 2rem;
+}
+
+.main-content {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 20px;
+    padding: 20px;
+}
+
+.camera-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.camera-controls {
+    display: flex;
+    gap: 15px;
+    align-items: end;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.camera-controls .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.camera-controls .form-group:last-child {
+    flex: 0 0 auto;
+}
+
+.video-container {
+    position: relative;
+    background-color: #000;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#videoFeed {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    display: block;
+}
+
+.video-overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.control-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.config-section {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.config-section h3 {
+    margin-top: 0;
+    color: #495057;
+    font-size: 1.1rem;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    flex: 1;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #1e7e34;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #545b62;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.status-display {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.status-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.status-warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.logs-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.logs-header {
+    padding: 15px;
+    background-color: #e9ecef;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logs-header .btn {
+    padding: 8px 16px;
+    font-size: 12px;
+    flex: 0 0 auto;
+    min-width: 80px;
+}
+
+.logs-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #495057;
+}
+
+.logs-content {
+    padding: 15px;
+}
+
+.log-entry {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    border-left: 4px solid #007bff;
+    background-color: white;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 280px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.log-entry-yes {
+    border-left-color: #28a745;
+}
+
+.log-entry-no {
+    border-left-color: #dc3545;
+}
+
+.log-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.log-response {
+    font-weight: 600;
+    font-size: 14px;
+    flex: 0 0 auto;
+}
+
+.log-timestamp {
+    font-size: 11px;
+    color: #6c757d;
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
+.log-question {
+    font-size: 12px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.connection-status {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 1000;
+}
+
+.connection-online {
+    background-color: #28a745;
+    color: white;
+}
+
+.connection-offline {
+    background-color: #dc3545;
+    color: white;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .camera-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .button-group {
+        flex-direction: column;
+    }
+    
+    .btn {
+        flex: none;
+    }
+}
+
+/* Canvas hidden */
+#canvas {
+    display: none;
+}
