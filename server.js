@@ -17,18 +17,128 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Database initialization
 const db = new sqlite3.Database('./ai_responses.db');
 
-// Helper function to get UTC+8 timestamp string for database
-function getUTC8TimestampString() {
-    const now = new Date();
-    const utc8Time = new Date(now.getTime() + (8 * 60 * 60 * 1000));
-    return utc8Time.toISOString().replace('T', ' ').replace('Z', '');
+// UTC+8 Time Utility Module
+class UTC8TimeUtil {
+    /**
+     * Get current UTC+8 time as Date object
+     * @returns {Date} Date object representing current UTC+8 time
+     */
+    static now() {
+        const utcNow = new Date();
+        // Add 8 hours (8 * 60 * 60 * 1000 milliseconds) to UTC time
+        return new Date(utcNow.getTime() + (8 * 60 * 60 * 1000));
+    }
+
+    /**
+     * Get UTC+8 timestamp string for database storage
+     * Format: YYYY-MM-DD HH:MM:SS.mmm
+     * @returns {string} Formatted timestamp string
+     */
+    static getTimestampString() {
+        const utc8Time = this.now();
+        const year = utc8Time.getUTCFullYear();
+        const month = String(utc8Time.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(utc8Time.getUTCDate()).padStart(2, '0');
+        const hours = String(utc8Time.getUTCHours()).padStart(2, '0');
+        const minutes = String(utc8Time.getUTCMinutes()).padStart(2, '0');
+        const seconds = String(utc8Time.getUTCSeconds()).padStart(2, '0');
+        const milliseconds = String(utc8Time.getUTCMilliseconds()).padStart(3, '0');
+
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
+    }
+
+    /**
+     * Get UTC+8 ISO string with timezone suffix (for external API compatibility)
+     * Format: YYYY-MM-DDTHH:MM:SS.sss+08:00
+     * @returns {string} ISO formatted string with timezone suffix
+     */
+    static getISOString() {
+        const utc8Time = this.now();
+        const year = utc8Time.getUTCFullYear();
+        const month = String(utc8Time.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(utc8Time.getUTCDate()).padStart(2, '0');
+        const hours = String(utc8Time.getUTCHours()).padStart(2, '0');
+        const minutes = String(utc8Time.getUTCMinutes()).padStart(2, '0');
+        const seconds = String(utc8Time.getUTCSeconds()).padStart(2, '0');
+        const milliseconds = String(utc8Time.getUTCMilliseconds()).padStart(3, '0');
+
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}+08:00`;
+    }
+
+    /**
+     * Get UTC+8 time string for logging (without timezone suffix for cleaner logs)
+     * Format: YYYY-MM-DDTHH:MM:SS.sss
+     * @returns {string} Clean formatted string for logging
+     */
+    static getLogString() {
+        const utc8Time = this.now();
+        const year = utc8Time.getUTCFullYear();
+        const month = String(utc8Time.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(utc8Time.getUTCDate()).padStart(2, '0');
+        const hours = String(utc8Time.getUTCHours()).padStart(2, '0');
+        const minutes = String(utc8Time.getUTCMinutes()).padStart(2, '0');
+        const seconds = String(utc8Time.getUTCSeconds()).padStart(2, '0');
+        const milliseconds = String(utc8Time.getUTCMilliseconds()).padStart(3, '0');
+
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}`;
+    }
+
+    /**
+     * Parse timestamp string to UTC+8 Date object
+     * @param {string} timestampStr - Timestamp string in various formats
+     * @returns {Date} Date object representing the parsed time in UTC+8
+     */
+    static parseTimestamp(timestampStr) {
+        if (!timestampStr) return this.now();
+
+        if (timestampStr.includes('T')) {
+            // ISO format
+            if (timestampStr.includes('+08:00')) {
+                // Already UTC+8
+                return new Date(timestampStr);
+            } else if (timestampStr.endsWith('Z')) {
+                // UTC time, need to add 8 hours
+                const utcTime = new Date(timestampStr);
+                return new Date(utcTime.getTime() + (8 * 60 * 60 * 1000));
+            } else {
+                // Assume it's already UTC+8
+                return new Date(timestampStr);
+            }
+        } else {
+            // SQLite datetime format: "YYYY-MM-DD HH:MM:SS"
+            // Treat as UTC+8 time
+            return new Date(timestampStr + '+08:00');
+        }
+    }
+
+    /**
+     * Format Date object to display string
+     * @param {Date|string} dateInput - Date object or timestamp string
+     * @returns {string} Formatted display string (YYYY-MM-DD HH:MM:SS)
+     */
+    static formatForDisplay(dateInput) {
+        let utc8Date;
+
+        if (typeof dateInput === 'string') {
+            utc8Date = this.parseTimestamp(dateInput);
+        } else if (dateInput instanceof Date) {
+            utc8Date = dateInput;
+        } else {
+            utc8Date = this.now();
+        }
+
+        const year = utc8Date.getUTCFullYear();
+        const month = String(utc8Date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(utc8Date.getUTCDate()).padStart(2, '0');
+        const hours = String(utc8Date.getUTCHours()).padStart(2, '0');
+        const minutes = String(utc8Date.getUTCMinutes()).padStart(2, '0');
+        const seconds = String(utc8Date.getUTCSeconds()).padStart(2, '0');
+
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
 }
 
-// Helper function to get UTC+8 Date object
-function getUTC8Date() {
-    const now = new Date();
-    return new Date(now.getTime() + (8 * 60 * 60 * 1000));
-}
+
 
 // Create table if not exists
 db.run(`CREATE TABLE IF NOT EXISTS ai_responses (
@@ -42,12 +152,12 @@ db.run(`CREATE TABLE IF NOT EXISTS ai_responses (
 
 // WebSocket connection for real-time updates
 wss.on('connection', (ws) => {
-    const connectTime = getUTC8Date();
-    console.log(`[${connectTime.toISOString()}] Client connected for real-time updates`);
+    const connectTime = UTC8TimeUtil.getLogString();
+    console.log(`[${connectTime}] Client connected for real-time updates`);
 
     ws.on('close', () => {
-        const disconnectTime = getUTC8Date();
-        console.log(`[${disconnectTime.toISOString()}] Client disconnected`);
+        const disconnectTime = UTC8TimeUtil.getLogString();
+        console.log(`[${disconnectTime}] Client disconnected`);
     });
 });
 
@@ -56,7 +166,7 @@ app.post('/api/save-response', (req, res) => {
     const { question, response, imageSize, processingTime } = req.body;
 
     // Get UTC+8 timestamp for database insertion
-    const utc8Timestamp = getUTC8TimestampString();
+    const utc8Timestamp = UTC8TimeUtil.getTimestampString();
 
     const stmt = db.prepare(`INSERT INTO ai_responses (timestamp, question, response, image_size, processing_time)
                             VALUES (?, ?, ?, ?, ?)`);
@@ -68,9 +178,7 @@ app.post('/api/save-response', (req, res) => {
         }
 
         // Create UTC+8 timestamp for response
-        const utc8Time = getUTC8Date();
-        // Use the same format as database for consistency
-        const utc8TimestampString = getUTC8TimestampString();
+        const utc8TimestampString = UTC8TimeUtil.getTimestampString();
 
         const responseData = {
             id: this.lastID,
@@ -82,7 +190,8 @@ app.post('/api/save-response', (req, res) => {
         };
 
         // Log the save operation with UTC+8 time
-        console.log(`[${utc8Time.toISOString()}] Saved response: ${response} (ID: ${this.lastID})`);
+        const logTime = UTC8TimeUtil.getLogString();
+        console.log(`[${logTime}] Saved response: ${response} (ID: ${this.lastID})`);
 
         // Broadcast to all connected clients
         wss.clients.forEach((client) => {
@@ -211,19 +320,9 @@ function calculateContinuousTime(rows) {
     let continuousStartIndex = 0;
     let continuousTime = 0;
 
-    // Convert timestamps to Date objects
-    // Parse timestamps as UTC+8 time
+    // Convert timestamps to Date objects using UTC+8 time utility
     const responses = rows.map(row => {
-        // If timestamp is in ISO format, parse it directly
-        // If timestamp is in SQLite format, convert it
-        let timestamp;
-        if (row.timestamp.includes('T')) {
-            timestamp = new Date(row.timestamp);
-        } else {
-            // SQLite datetime format: "YYYY-MM-DD HH:MM:SS"
-            // Treat as UTC+8 time
-            timestamp = new Date(row.timestamp + '+08:00');
-        }
+        const timestamp = UTC8TimeUtil.parseTimestamp(row.timestamp);
 
         return {
             timestamp: timestamp,
@@ -302,9 +401,9 @@ function calculateContinuousTime(rows) {
 
 // Function to generate today's chart data (24 hours, stacked bar chart)
 function generateTodayChartData(rows) {
-    const utc8Now = getUTC8Date();
+    const utc8Now = UTC8TimeUtil.now();
     const startOfDay = new Date(utc8Now);
-    startOfDay.setHours(0, 0, 0, 0);
+    startOfDay.setUTCHours(0, 0, 0, 0);
 
     // Initialize 24 hours data structure
     const hourlyData = Array.from({ length: 24 }, (_, hour) => ({
@@ -390,20 +489,20 @@ function generateTodayChartData(rows) {
 
 // Function to generate week chart data (7 days, filled line chart)
 function generateWeekChartData(rows) {
-    const utc8Now = getUTC8Date();
+    const utc8Now = UTC8TimeUtil.now();
     const startOfWeek = new Date(utc8Now);
-    startOfWeek.setDate(utc8Now.getDate() - 6); // Last 7 days including today
-    startOfWeek.setHours(0, 0, 0, 0);
+    startOfWeek.setUTCDate(utc8Now.getUTCDate() - 6); // Last 7 days including today
+    startOfWeek.setUTCHours(0, 0, 0, 0);
 
     // Initialize 7 days data structure
     const dailyData = Array.from({ length: 7 }, (_, dayIndex) => {
         const date = new Date(startOfWeek);
-        date.setDate(startOfWeek.getDate() + dayIndex);
+        date.setUTCDate(startOfWeek.getUTCDate() + dayIndex);
         return {
             date: date,
             phoneTime: 0,      // hours looking at phone
             noPhoneTime: 0,    // hours not looking at phone
-            label: `${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
+            label: `${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${date.getUTCDate().toString().padStart(2, '0')}`
         };
     });
 
@@ -463,20 +562,20 @@ function generateWeekChartData(rows) {
 
 // Function to generate month chart data (31 days, filled line chart)
 function generateMonthChartData(rows) {
-    const utc8Now = getUTC8Date();
+    const utc8Now = UTC8TimeUtil.now();
     const startOfMonth = new Date(utc8Now);
-    startOfMonth.setDate(utc8Now.getDate() - 30); // Last 31 days including today
-    startOfMonth.setHours(0, 0, 0, 0);
+    startOfMonth.setUTCDate(utc8Now.getUTCDate() - 30); // Last 31 days including today
+    startOfMonth.setUTCHours(0, 0, 0, 0);
 
     // Initialize 31 days data structure
     const dailyData = Array.from({ length: 31 }, (_, dayIndex) => {
         const date = new Date(startOfMonth);
-        date.setDate(startOfMonth.getDate() + dayIndex);
+        date.setUTCDate(startOfMonth.getUTCDate() + dayIndex);
         return {
             date: date,
             phoneTime: 0,      // hours looking at phone
             noPhoneTime: 0,    // hours not looking at phone
-            label: `${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
+            label: `${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${date.getUTCDate().toString().padStart(2, '0')}`
         };
     });
 
@@ -541,16 +640,9 @@ function calculateUsagePeriods(rows) {
     const periods = [];
     let currentPeriod = null;
 
-    // Convert timestamps and sort by time (ascending)
+    // Convert timestamps and sort by time (ascending) using UTC+8 time utility
     const responses = rows.map(row => {
-        let timestamp;
-        if (row.timestamp.includes('T')) {
-            timestamp = new Date(row.timestamp);
-        } else {
-            // SQLite datetime format: "YYYY-MM-DD HH:MM:SS"
-            // Treat as UTC+8 time
-            timestamp = new Date(row.timestamp + '+08:00');
-        }
+        const timestamp = UTC8TimeUtil.parseTimestamp(row.timestamp);
 
         return {
             timestamp: timestamp,
@@ -616,9 +708,10 @@ function calculateUsagePeriods(rows) {
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     // Return UTC+8 timestamp
-    const utc8Time = getUTC8Date();
-    console.log(`[${utc8Time.toISOString()}] Health check requested`);
-    res.json({ status: 'OK', timestamp: utc8Time.toISOString() });
+    const logTime = UTC8TimeUtil.getLogString();
+    const responseTime = UTC8TimeUtil.getLogString(); // Use clean format for API response too
+    console.log(`[${logTime}] Health check requested`);
+    res.json({ status: 'OK', timestamp: responseTime });
 });
 
 // Serve index.html for root route
@@ -628,10 +721,10 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    const startTime = getUTC8Date();
-    console.log(`[${startTime.toISOString()}] Server running on port ${PORT}`);
-    console.log(`[${startTime.toISOString()}] Access the app at: http://localhost:${PORT}`);
-    console.log(`[${startTime.toISOString()}] Current UTC+8 time: ${startTime.toISOString()}`);
+    const logTimeString = UTC8TimeUtil.getLogString();
+    console.log(`[${logTimeString}] Server running on port ${PORT}`);
+    console.log(`[${logTimeString}] Access the app at: http://localhost:${PORT}`);
+    console.log(`[${logTimeString}] Current UTC+8 time: ${logTimeString}`);
 });
 
 // Graceful shutdown

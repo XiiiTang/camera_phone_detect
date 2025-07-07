@@ -20,6 +20,10 @@ class ChartService {
         this.totalPhoneTimeElement = document.getElementById('totalPhoneTime');
         this.totalNoPhoneTimeElement = document.getElementById('totalNoPhoneTime');
         this.totalRecordsElement = document.getElementById('totalRecords');
+
+        // Statistics label elements
+        this.phoneTimeLabelElement = document.getElementById('phoneTimeLabel');
+        this.noPhoneTimeLabelElement = document.getElementById('noPhoneTimeLabel');
         
         this.setupEventListeners();
     }
@@ -33,9 +37,10 @@ class ChartService {
     
     switchPeriod(period) {
         if (this.currentPeriod === period) return;
-        
+
         this.currentPeriod = period;
         this.updateActiveButton();
+        this.updateStatisticsLabels();
         this.loadChartData();
     }
     
@@ -44,7 +49,7 @@ class ChartService {
         [this.todayBtn, this.weekBtn, this.monthBtn].forEach(btn => {
             btn.classList.remove('active');
         });
-        
+
         // Add active class to current period button
         switch (this.currentPeriod) {
             case 'today':
@@ -55,6 +60,24 @@ class ChartService {
                 break;
             case 'month':
                 this.monthBtn.classList.add('active');
+                break;
+        }
+    }
+
+    updateStatisticsLabels() {
+        // Update statistics labels based on current period
+        switch (this.currentPeriod) {
+            case 'today':
+                this.phoneTimeLabelElement.textContent = '今日看手机总时长:';
+                this.noPhoneTimeLabelElement.textContent = '今日没看手机总时长:';
+                break;
+            case 'week':
+                this.phoneTimeLabelElement.textContent = '本周看手机总时长:';
+                this.noPhoneTimeLabelElement.textContent = '本周没看手机总时长:';
+                break;
+            case 'month':
+                this.phoneTimeLabelElement.textContent = '本月看手机总时长:';
+                this.noPhoneTimeLabelElement.textContent = '本月没看手机总时长:';
                 break;
         }
     }
@@ -334,6 +357,7 @@ class ChartService {
 
     // Initialize chart with default period
     initialize() {
+        this.updateStatisticsLabels();
         this.loadChartData();
     }
 }

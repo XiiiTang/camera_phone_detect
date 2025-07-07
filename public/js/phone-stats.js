@@ -82,70 +82,11 @@ class PhoneStatsService {
 
 
     formatTime(seconds) {
-        if (!seconds || seconds === 0) {
-            return '0秒';
-        }
-
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        const remainingSeconds = seconds % 60;
-
-        let result = '';
-
-        if (hours > 0) {
-            result += `${hours}小时`;
-        }
-
-        if (minutes > 0) {
-            result += `${minutes}分`;
-        }
-
-        if (remainingSeconds > 0 || result === '') {
-            result += `${remainingSeconds}秒`;
-        }
-
-        return result;
+        return UTC8TimeUtil.formatDuration(seconds);
     }
 
     formatUTC8Time(timestampInput) {
-        // Handle different timestamp formats from server
-        let utc8Date;
-
-        if (typeof timestampInput === 'string') {
-            if (timestampInput.includes(' ') && !timestampInput.includes('T')) {
-                // Database format "YYYY-MM-DD HH:MM:SS.mmm" - already UTC+8
-                // Parse it directly as local time since it's already in the correct timezone
-                const parts = timestampInput.split(' ');
-                const datePart = parts[0];
-                const timePart = parts[1] || '00:00:00';
-
-                const [year, month, day] = datePart.split('-').map(Number);
-                const [hours, minutes, seconds] = timePart.split(':').map(Number);
-
-                // Create date object directly with UTC+8 values
-                utc8Date = new Date(year, month - 1, day, hours, minutes, seconds);
-            } else if (timestampInput.includes('T')) {
-                // ISO format - might be UTC+8 marked as Z, so parse carefully
-                utc8Date = new Date(timestampInput);
-            } else {
-                utc8Date = new Date(timestampInput);
-            }
-        } else if (timestampInput instanceof Date) {
-            utc8Date = timestampInput;
-        } else {
-            // Fallback
-            utc8Date = new Date();
-        }
-
-        // Format as YYYY-MM-DD HH:MM:SS
-        const year = utc8Date.getFullYear();
-        const month = String(utc8Date.getMonth() + 1).padStart(2, '0');
-        const day = String(utc8Date.getDate()).padStart(2, '0');
-        const hours = String(utc8Date.getHours()).padStart(2, '0');
-        const minutes = String(utc8Date.getMinutes()).padStart(2, '0');
-        const seconds = String(utc8Date.getSeconds()).padStart(2, '0');
-
-        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        return UTC8TimeUtil.formatForDisplay(timestampInput);
     }
 
     displayError() {

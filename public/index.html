@@ -121,11 +121,11 @@
                 <!-- Chart Statistics -->
                 <div class="chart-stats" id="chartStats">
                     <div class="chart-stat-item">
-                        <span class="chart-stat-label">看手机总时长:</span>
+                        <span class="chart-stat-label" id="phoneTimeLabel">今日看手机总时长:</span>
                         <span class="chart-stat-value" id="totalPhoneTime">--</span>
                     </div>
                     <div class="chart-stat-item">
-                        <span class="chart-stat-label">没看手机总时长:</span>
+                        <span class="chart-stat-label" id="noPhoneTimeLabel">今日没看手机总时长:</span>
                         <span class="chart-stat-value" id="totalNoPhoneTime">--</span>
                     </div>
                     <div class="chart-stat-item">
@@ -143,6 +143,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- JavaScript modules -->
+    <script src="js/utc8-time-util.js"></script>
     <script src="js/camera.js"></script>
     <script src="js/ai-service.js"></script>
     <script src="js/database-service.js"></script>
