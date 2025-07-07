@@ -195,46 +195,61 @@ function calculateContinuousTime(rows) {
         };
     });
 
-    // Start from the latest response and work backwards
-    for (let i = 1; i < responses.length; i++) {
-        const currentResponse = responses[i];
-        const previousResponse = responses[i - 1];
+    // Check if there's a time gap > 20 seconds between the latest response and the previous one
+    if (responses.length > 1) {
+        const latestTimestamp = responses[0].timestamp;
+        const previousTimestamp = responses[1].timestamp;
+        const timeDiff = (latestTimestamp - previousTimestamp) / 1000;
 
-        // Calculate time difference in seconds
-        const timeDiff = (previousResponse.timestamp - currentResponse.timestamp) / 1000;
-
-        // Check if time gap is too large (>20 seconds)
+        // If time gap is too large (>20 seconds), reset continuous time to 0
         if (timeDiff > 20) {
-            // Time gap is too large, continuous period ends at the previous response (i-1)
-            // So we calculate from latest (index 0) to the response before the gap (index i-1)
-            continuousStartIndex = i - 1;
-            break;
-        }
-
-        // Check if response content is different
-        if (currentResponse.response !== previousResponse.response) {
-            // Content is different, continuous period is from latest response to this different response
-            // So we calculate from latest (index 0) to this different response (index i)
-            continuousStartIndex = i;
-            break;
-        }
-
-        // If we reach the end of the array, the continuous period includes all responses
-        if (i === responses.length - 1) {
-            continuousStartIndex = i;
-        }
-    }
-
-    // Calculate the continuous time from the latest response to the end of continuous period
-    if (continuousStartIndex > 0) {
-        continuousTime = (responses[0].timestamp - responses[continuousStartIndex].timestamp) / 1000;
-    } else {
-        // Only one response or all responses are continuous to the end
-        if (responses.length > 1) {
-            continuousTime = (responses[0].timestamp - responses[responses.length - 1].timestamp) / 1000;
-        } else {
             continuousTime = 0;
+        } else {
+            // Start from the latest response and work backwards to find continuous period
+            for (let i = 1; i < responses.length; i++) {
+                const currentResponse = responses[i];
+                const previousResponse = responses[i - 1];
+
+                // Calculate time difference in seconds
+                const timeDiffInLoop = (previousResponse.timestamp - currentResponse.timestamp) / 1000;
+
+                // Check if time gap is too large (>20 seconds)
+                if (timeDiffInLoop > 20) {
+                    // Time gap is too large, continuous period ends at the previous response (i-1)
+                    // So we calculate from latest (index 0) to the response before the gap (index i-1)
+                    continuousStartIndex = i - 1;
+                    break;
+                }
+
+                // Check if response content is different
+                if (currentResponse.response !== previousResponse.response) {
+                    // Content is different, continuous period is from latest response to this different response
+                    // So we calculate from latest (index 0) to this different response (index i)
+                    continuousStartIndex = i;
+                    break;
+                }
+
+                // If we reach the end of the array, the continuous period includes all responses
+                if (i === responses.length - 1) {
+                    continuousStartIndex = i;
+                }
+            }
+
+            // Calculate the continuous time from the latest response to the end of continuous period
+            if (continuousStartIndex > 0) {
+                continuousTime = (responses[0].timestamp - responses[continuousStartIndex].timestamp) / 1000;
+            } else {
+                // Only one response or all responses are continuous to the end
+                if (responses.length > 1) {
+                    continuousTime = (responses[0].timestamp - responses[responses.length - 1].timestamp) / 1000;
+                } else {
+                    continuousTime = 0;
+                }
+            }
         }
+    } else {
+        // Only one response, continuous time is 0
+        continuousTime = 0;
     }
 
     // Determine if currently looking at phone or not
