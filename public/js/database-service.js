@@ -83,6 +83,21 @@ class DatabaseService {
         }
     }
 
+    async getChartData(period = 'today') {
+        try {
+            const response = await fetch(`${this.baseURL}/api/chart-data?period=${period}`);
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch chart data: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching chart data:', error);
+            throw error;
+        }
+    }
+
     connectWebSocket() {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsURL = `${protocol}//${window.location.host}`;

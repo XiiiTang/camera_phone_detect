@@ -4,6 +4,7 @@ class AppController {
         this.aiService = new AIService();
         this.dbService = new DatabaseService();
         this.phoneStats = new PhoneStatsService(this.dbService);
+        this.chartService = new ChartService(this.dbService);
 
         this.isProcessing = false;
         this.processingInterval = null;
@@ -27,6 +28,9 @@ class AppController {
 
             // Start phone statistics service
             this.phoneStats.start();
+
+            // Initialize chart service
+            this.chartService.initialize();
 
             this.updateStatus('Camera initialized successfully', 'success');
         } catch (error) {
@@ -107,11 +111,13 @@ class AppController {
 
     setupWebSocket() {
         this.dbService.onNewResponse = (data) => {
-            console.log('WebSocket: New response received, triggering stats update');
+            console.log('WebSocket: New response received, triggering stats and chart update');
             this.addLogEntry(data);
             // Trigger phone stats update when new AI response is received
             // This is the primary mechanism for updating statistics
             this.phoneStats.triggerUpdate();
+            // Also refresh chart data when new AI response is received
+            this.chartService.refreshChart();
         };
 
         this.dbService.onClearResponses = () => {

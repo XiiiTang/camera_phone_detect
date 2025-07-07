@@ -161,6 +161,42 @@ app.get('/api/phone-stats', (req, res) => {
     });
 });
 
+// API endpoint to get chart data for different time periods
+app.get('/api/chart-data', (req, res) => {
+    const period = req.query.period || 'today'; // today, week, month
+
+    // Get all responses ordered by timestamp ASC for chart processing
+    db.all(`SELECT timestamp, response FROM ai_responses ORDER BY timestamp ASC`, (err, rows) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        try {
+            let chartData;
+            switch (period) {
+                case 'today':
+                    chartData = generateTodayChartData(rows);
+                    break;
+                case 'week':
+                    chartData = generateWeekChartData(rows);
+                    break;
+                case 'month':
+                    chartData = generateMonthChartData(rows);
+                    break;
+                default:
+                    return res.status(400).json({ error: 'Invalid period parameter' });
+            }
+
+            console.log(`Chart data generated for ${period}:`, chartData);
+            res.json(chartData);
+        } catch (error) {
+            console.error('Error generating chart data:', error);
+            res.status(500).json({ error: 'Error generating chart data' });
+        }
+    });
+});
+
 // Function to calculate continuous time based on the specified logic
 function calculateContinuousTime(rows) {
     if (rows.length === 0) {
@@ -262,6 +298,321 @@ function calculateContinuousTime(rows) {
         lastTimestamp: latestResponse.timestamp,
         continuousSeconds: Math.round(continuousTime)
     };
+}
+
+// Function to generate today's chart data (24 hours, stacked bar chart)
+function generateTodayChartData(rows) {
+    const utc8Now = getUTC8Date();
+    const startOfDay = new Date(utc8Now);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    // Initialize 24 hours data structure
+    const hourlyData = Array.from({ length: 24 }, (_, hour) => ({
+        hour,
+        phoneTime: 0,      // minutes looking at phone
+        noPhoneTime: 0,    // minutes not looking at phone
+        label: `${hour.toString().padStart(2, '0')}:00`
+    }));
+
+    // Process responses and calculate usage periods
+    const usagePeriods = calculateUsagePeriods(rows);
+
+    // Aggregate data by hour
+    usagePeriods.forEach(period => {
+        const periodStart = new Date(period.startTime);
+        const periodEnd = new Date(period.endTime);
+
+        // Only include periods from today
+        if (periodStart >= startOfDay && periodStart < new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000)) {
+            const startHour = periodStart.getHours();
+            const endHour = periodEnd.getHours();
+            const durationMinutes = Math.round(period.duration / 60); // Convert seconds to minutes
+
+            if (startHour === endHour) {
+                // Period within single hour
+                if (period.isPhoneUsage) {
+                    hourlyData[startHour].phoneTime += durationMinutes;
+                } else {
+                    hourlyData[startHour].noPhoneTime += durationMinutes;
+                }
+            } else {
+                // Period spans multiple hours - distribute proportionally
+                for (let hour = startHour; hour <= endHour && hour < 24; hour++) {
+                    const hourStart = new Date(periodStart);
+                    hourStart.setHours(hour, 0, 0, 0);
+                    const hourEnd = new Date(hourStart);
+                    hourEnd.setHours(hour + 1, 0, 0, 0);
+
+                    const overlapStart = new Date(Math.max(periodStart, hourStart));
+                    const overlapEnd = new Date(Math.min(periodEnd, hourEnd));
+                    const overlapMinutes = Math.max(0, (overlapEnd - overlapStart) / (1000 * 60));
+
+                    if (period.isPhoneUsage) {
+                        hourlyData[hour].phoneTime += Math.round(overlapMinutes);
+                    } else {
+                        hourlyData[hour].noPhoneTime += Math.round(overlapMinutes);
+                    }
+                }
+            }
+        }
+    });
+
+    // Cap values at 60 minutes per hour
+    hourlyData.forEach(data => {
+        data.phoneTime = Math.min(data.phoneTime, 60);
+        data.noPhoneTime = Math.min(data.noPhoneTime, 60);
+    });
+
+    return {
+        type: 'today',
+        labels: hourlyData.map(d => d.label),
+        datasets: [
+            {
+                label: '没看手机',
+                data: hourlyData.map(d => d.noPhoneTime),
+                backgroundColor: '#FFE4B5', // Light orange
+                borderColor: '#FFA500',
+                borderWidth: 1
+            },
+            {
+                label: '看手机',
+                data: hourlyData.map(d => d.phoneTime),
+                backgroundColor: '#20B2AA', // Teal
+                borderColor: '#008B8B',
+                borderWidth: 1
+            }
+        ],
+        statistics: {
+            totalPhoneTime: hourlyData.reduce((sum, d) => sum + d.phoneTime, 0),
+            totalNoPhoneTime: hourlyData.reduce((sum, d) => sum + d.noPhoneTime, 0),
+            totalRecords: rows.length
+        }
+    };
+}
+
+// Function to generate week chart data (7 days, filled line chart)
+function generateWeekChartData(rows) {
+    const utc8Now = getUTC8Date();
+    const startOfWeek = new Date(utc8Now);
+    startOfWeek.setDate(utc8Now.getDate() - 6); // Last 7 days including today
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    // Initialize 7 days data structure
+    const dailyData = Array.from({ length: 7 }, (_, dayIndex) => {
+        const date = new Date(startOfWeek);
+        date.setDate(startOfWeek.getDate() + dayIndex);
+        return {
+            date: date,
+            phoneTime: 0,      // hours looking at phone
+            noPhoneTime: 0,    // hours not looking at phone
+            label: `${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
+        };
+    });
+
+    // Process responses and calculate usage periods
+    const usagePeriods = calculateUsagePeriods(rows);
+
+    // Aggregate data by day
+    usagePeriods.forEach(period => {
+        const periodStart = new Date(period.startTime);
+        const dayIndex = Math.floor((periodStart - startOfWeek) / (24 * 60 * 60 * 1000));
+
+        if (dayIndex >= 0 && dayIndex < 7) {
+            const durationHours = period.duration / 3600; // Convert seconds to hours
+
+            if (period.isPhoneUsage) {
+                dailyData[dayIndex].phoneTime += durationHours;
+            } else {
+                dailyData[dayIndex].noPhoneTime += durationHours;
+            }
+        }
+    });
+
+    // Cap values at 10 hours per day
+    dailyData.forEach(data => {
+        data.phoneTime = Math.min(data.phoneTime, 10);
+        data.noPhoneTime = Math.min(data.noPhoneTime, 10);
+    });
+
+    return {
+        type: 'week',
+        labels: dailyData.map(d => d.label),
+        datasets: [
+            {
+                label: '没看手机',
+                data: dailyData.map(d => Math.round(d.noPhoneTime * 100) / 100), // Round to 2 decimal places
+                borderColor: '#28a745', // Green
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: '看手机',
+                data: dailyData.map(d => Math.round(d.phoneTime * 100) / 100),
+                borderColor: '#dc3545', // Red
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                fill: true,
+                tension: 0.4
+            }
+        ],
+        statistics: {
+            totalPhoneTime: Math.round(dailyData.reduce((sum, d) => sum + d.phoneTime, 0) * 100) / 100,
+            totalNoPhoneTime: Math.round(dailyData.reduce((sum, d) => sum + d.noPhoneTime, 0) * 100) / 100,
+            totalRecords: rows.length
+        }
+    };
+}
+
+// Function to generate month chart data (31 days, filled line chart)
+function generateMonthChartData(rows) {
+    const utc8Now = getUTC8Date();
+    const startOfMonth = new Date(utc8Now);
+    startOfMonth.setDate(utc8Now.getDate() - 30); // Last 31 days including today
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    // Initialize 31 days data structure
+    const dailyData = Array.from({ length: 31 }, (_, dayIndex) => {
+        const date = new Date(startOfMonth);
+        date.setDate(startOfMonth.getDate() + dayIndex);
+        return {
+            date: date,
+            phoneTime: 0,      // hours looking at phone
+            noPhoneTime: 0,    // hours not looking at phone
+            label: `${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
+        };
+    });
+
+    // Process responses and calculate usage periods
+    const usagePeriods = calculateUsagePeriods(rows);
+
+    // Aggregate data by day
+    usagePeriods.forEach(period => {
+        const periodStart = new Date(period.startTime);
+        const dayIndex = Math.floor((periodStart - startOfMonth) / (24 * 60 * 60 * 1000));
+
+        if (dayIndex >= 0 && dayIndex < 31) {
+            const durationHours = period.duration / 3600; // Convert seconds to hours
+
+            if (period.isPhoneUsage) {
+                dailyData[dayIndex].phoneTime += durationHours;
+            } else {
+                dailyData[dayIndex].noPhoneTime += durationHours;
+            }
+        }
+    });
+
+    // Cap values at 10 hours per day
+    dailyData.forEach(data => {
+        data.phoneTime = Math.min(data.phoneTime, 10);
+        data.noPhoneTime = Math.min(data.noPhoneTime, 10);
+    });
+
+    return {
+        type: 'month',
+        labels: dailyData.map(d => d.label),
+        datasets: [
+            {
+                label: '没看手机',
+                data: dailyData.map(d => Math.round(d.noPhoneTime * 100) / 100),
+                borderColor: '#28a745', // Green
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: '看手机',
+                data: dailyData.map(d => Math.round(d.phoneTime * 100) / 100),
+                borderColor: '#dc3545', // Red
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                fill: true,
+                tension: 0.4
+            }
+        ],
+        statistics: {
+            totalPhoneTime: Math.round(dailyData.reduce((sum, d) => sum + d.phoneTime, 0) * 100) / 100,
+            totalNoPhoneTime: Math.round(dailyData.reduce((sum, d) => sum + d.noPhoneTime, 0) * 100) / 100,
+            totalRecords: rows.length
+        }
+    };
+}
+
+// Function to calculate usage periods from raw response data
+function calculateUsagePeriods(rows) {
+    if (rows.length === 0) return [];
+
+    const periods = [];
+    let currentPeriod = null;
+
+    // Convert timestamps and sort by time (ascending)
+    const responses = rows.map(row => {
+        let timestamp;
+        if (row.timestamp.includes('T')) {
+            timestamp = new Date(row.timestamp);
+        } else {
+            // SQLite datetime format: "YYYY-MM-DD HH:MM:SS"
+            // Treat as UTC+8 time
+            timestamp = new Date(row.timestamp + '+08:00');
+        }
+
+        return {
+            timestamp: timestamp,
+            response: row.response.toLowerCase().trim(),
+            isPhoneUsage: row.response.toLowerCase().trim() === 'yes'
+        };
+    }).sort((a, b) => a.timestamp - b.timestamp);
+
+    for (let i = 0; i < responses.length; i++) {
+        const current = responses[i];
+        const next = responses[i + 1];
+
+        // Start a new period if this is the first response or if the response type changed
+        if (!currentPeriod || currentPeriod.isPhoneUsage !== current.isPhoneUsage) {
+            // End the previous period if it exists (end at previous response time)
+            if (currentPeriod && i > 0) {
+                const previous = responses[i - 1];
+                currentPeriod.endTime = previous.timestamp;
+                currentPeriod.duration = (currentPeriod.endTime - currentPeriod.startTime) / 1000;
+                if (currentPeriod.duration >= 1) {
+                    periods.push(currentPeriod);
+                }
+            }
+
+            // Start new period
+            currentPeriod = {
+                startTime: current.timestamp,
+                endTime: current.timestamp,
+                isPhoneUsage: current.isPhoneUsage,
+                duration: 0
+            };
+        }
+
+        // Update current period end time to current response
+        currentPeriod.endTime = current.timestamp;
+
+        // Check time gap to next response
+        if (next) {
+            const timeDiff = (next.timestamp - current.timestamp) / 1000;
+
+            // If gap is too large (>20 seconds), end current period
+            if (timeDiff > 20) {
+                currentPeriod.duration = (currentPeriod.endTime - currentPeriod.startTime) / 1000;
+                if (currentPeriod.duration >= 1) {
+                    periods.push(currentPeriod);
+                }
+                currentPeriod = null;
+            }
+        } else {
+            // This is the last response, end the current period
+            if (currentPeriod) {
+                currentPeriod.duration = (currentPeriod.endTime - currentPeriod.startTime) / 1000;
+                if (currentPeriod.duration >= 1) {
+                    periods.push(currentPeriod);
+                }
+            }
+        }
+    }
+
+    return periods;
 }
 
 // Health check endpoint

@@ -55,6 +55,60 @@
                     </div>
                 </div>
 
+                <!-- Usage Trend Charts -->
+                <div class="charts-section">
+                    <h3>使用趋势图表</h3>
+
+                    <!-- Chart Controls -->
+                    <div class="chart-controls">
+                        <div class="time-period-buttons">
+                            <button id="todayBtn" class="btn btn-chart active">今日</button>
+                            <button id="weekBtn" class="btn btn-chart">本周</button>
+                            <button id="monthBtn" class="btn btn-chart">本月</button>
+                        </div>
+                        <button id="refreshChartBtn" class="btn btn-secondary">刷新图表</button>
+                    </div>
+
+                    <!-- Chart Container -->
+                    <div class="chart-container">
+                        <canvas id="usageChart"></canvas>
+                        <div id="chartLoading" class="chart-loading hidden">加载中...</div>
+                        <div id="chartError" class="chart-error hidden">加载图表数据失败</div>
+                        <div id="chartEmpty" class="chart-empty hidden">
+                            <div class="empty-icon">📊</div>
+                            <div class="empty-text">暂无使用数据</div>
+                            <div class="empty-hint">开始使用AI检测功能后，这里将显示您的手机使用趋势</div>
+                        </div>
+                    </div>
+
+                    <!-- Chart Statistics -->
+                    <div class="chart-stats" id="chartStats">
+                        <div class="chart-stat-item">
+                            <span class="chart-stat-label">看手机总时长:</span>
+                            <span class="chart-stat-value" id="totalPhoneTime">--</span>
+                        </div>
+                        <div class="chart-stat-item">
+                            <span class="chart-stat-label">没看手机总时长:</span>
+                            <span class="chart-stat-value" id="totalNoPhoneTime">--</span>
+                        </div>
+                        <div class="chart-stat-item">
+                            <span class="chart-stat-label">数据记录数:</span>
+                            <span class="chart-stat-value" id="totalRecords">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Chart Info Panel -->
+                    <div class="chart-info" id="chartInfo">
+                        <div class="chart-info-title">图表说明</div>
+                        <div class="chart-info-content" id="chartInfoContent">
+                            <p><strong>今日视图:</strong> 显示24小时内每小时的手机使用情况，以堆叠条形图展示</p>
+                            <p><strong>本周视图:</strong> 显示最近7天每天的使用趋势，以填充线形图展示</p>
+                            <p><strong>本月视图:</strong> 显示最近31天每天的使用趋势，以填充线形图展示</p>
+                            <p><strong>数据更新:</strong> 图表会在AI检测到新的响应时自动刷新</p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <div class="control-panel">
@@ -100,11 +154,15 @@
 
     <canvas id="canvas" class="hidden"></canvas>
 
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <!-- JavaScript modules -->
     <script src="js/camera.js"></script>
     <script src="js/ai-service.js"></script>
     <script src="js/database-service.js"></script>
     <script src="js/phone-stats.js"></script>
+    <script src="js/chart-service.js"></script>
     <script src="js/app.js"></script>
 
     <style>
