@@ -36,21 +36,7 @@
                     Initializing application...
                 </div>
 
-                <!-- Phone Usage Statistics -->
-                <div class="stats-section">
-                    <h3>手机使用统计</h3>
-                    <div class="stats-grid">
-                        <div class="stat-card stat-phone">
-                            <div class="stat-label">当前连续看手机时长</div>
-                            <div class="stat-value" id="continuousPhoneTime">0秒</div>
-                        </div>
-                        <div class="stat-card stat-no-phone">
-                            <div class="stat-label">当前连续没看手机时长</div>
-                            <div class="stat-value" id="continuousNoPhoneTime">0秒</div>
-                        </div>
-                    </div>
 
-                </div>
 
 
 
@@ -107,6 +93,16 @@
                         <button id="todayBtn" class="btn btn-chart active">今日</button>
                         <button id="weekBtn" class="btn btn-chart">本周</button>
                         <button id="monthBtn" class="btn btn-chart">本月</button>
+                    </div>
+                    <div class="continuous-time-display">
+                        <div class="continuous-time-item">
+                            <span class="time-label">当前持续观看手机时长:</span>
+                            <span class="time-value" id="continuousPhoneTime">0秒</span>
+                        </div>
+                        <div class="continuous-time-item">
+                            <span class="time-label">当前持续不看手机时长:</span>
+                            <span class="time-value" id="continuousNoPhoneTime">0秒</span>
+                        </div>
                     </div>
                 </div>
 

@@ -15,10 +15,6 @@ class PhoneStatsService {
         // DOM elements
         this.continuousPhoneTimeElement = document.getElementById('continuousPhoneTime');
         this.continuousNoPhoneTimeElement = document.getElementById('continuousNoPhoneTime');
-
-        // Stat cards for visual feedback
-        this.phoneStatCard = document.querySelector('.stat-phone');
-        this.noPhoneStatCard = document.querySelector('.stat-no-phone');
     }
 
     start() {
@@ -80,29 +76,10 @@ class PhoneStatsService {
         this.continuousPhoneTimeElement.textContent = phoneTime;
         this.continuousNoPhoneTimeElement.textContent = noPhoneTime;
 
-        // Update visual indicators - also consider pause state
-        this.updateVisualIndicators(stats);
-
         console.log('Phone stats updated:', stats, 'isPaused:', this.isPaused);
     }
 
-    updateVisualIndicators(stats) {
-        // Remove active classes
-        this.phoneStatCard.classList.remove('active');
-        this.noPhoneStatCard.classList.remove('active');
 
-        // If paused, don't show any active indicators
-        if (this.isPaused) {
-            return;
-        }
-
-        // Add active class based on current state
-        if (stats.currentContinuousPhoneTime > 0) {
-            this.phoneStatCard.classList.add('active');
-        } else if (stats.currentContinuousNoPhoneTime > 0) {
-            this.noPhoneStatCard.classList.add('active');
-        }
-    }
 
     formatTime(seconds) {
         if (!seconds || seconds === 0) {
@@ -174,10 +151,6 @@ class PhoneStatsService {
     displayError() {
         this.continuousPhoneTimeElement.textContent = '--';
         this.continuousNoPhoneTimeElement.textContent = '--';
-
-        // Remove active classes
-        this.phoneStatCard.classList.remove('active');
-        this.noPhoneStatCard.classList.remove('active');
     }
 
     // Method to trigger immediate update (called when new AI response is received)
@@ -215,10 +188,6 @@ class PhoneStatsService {
     displayPausedState() {
         this.continuousPhoneTimeElement.textContent = this.formatTime(0);
         this.continuousNoPhoneTimeElement.textContent = this.formatTime(0);
-
-        // Remove active classes
-        this.phoneStatCard.classList.remove('active');
-        this.noPhoneStatCard.classList.remove('active');
 
         console.log('Phone stats display set to paused state');
     }

@@ -92,7 +92,7 @@ body {
 
 .config-section {
     background-color: #f8f9fa;
-    padding: 20px;
+    padding: 15px;
     border-radius: 8px;
     border: 1px solid #e9ecef;
 }
@@ -244,83 +244,7 @@ body {
     border: 1px solid #bee5eb;
 }
 
-/* Phone Usage Statistics Styles */
-.stats-section {
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 15px;
-    border: 1px solid #e9ecef;
-    height: 140px; /* 减少高度 */
-}
 
-.stats-section h3 {
-    margin: 0 0 15px 0;
-    color: #495057;
-    font-size: 1.2rem;
-    text-align: center;
-}
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-bottom: 15px;
-}
-
-.stat-card {
-    background-color: white;
-    border-radius: 8px;
-    padding: 15px;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border: 2px solid transparent;
-    transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.stat-phone {
-    border-color: #dc3545;
-}
-
-.stat-phone.active {
-    background-color: #f8d7da;
-    border-color: #dc3545;
-}
-
-.stat-no-phone {
-    border-color: #28a745;
-}
-
-.stat-no-phone.active {
-    background-color: #d4edda;
-    border-color: #28a745;
-}
-
-.stat-label {
-    font-size: 0.9rem;
-    color: #6c757d;
-    margin-bottom: 8px;
-    font-weight: 500;
-}
-
-.stat-value {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: #495057;
-}
-
-.stat-phone .stat-value {
-    color: #dc3545;
-}
-
-.stat-no-phone .stat-value {
-    color: #28a745;
-}
 
 
 
@@ -352,6 +276,35 @@ body {
 .time-period-buttons {
     display: flex;
     gap: 5px;
+}
+
+.continuous-time-display {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.continuous-time-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.time-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.time-value {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #495057;
+    min-width: 40px;
 }
 
 .btn-chart {
@@ -506,12 +459,12 @@ body {
     background-color: #f8f9fa;
     border-radius: 8px;
     border: 1px solid #e9ecef;
-    height: 280px; /* 增加高度以与手机使用统计平齐 */
+    height: 115px; /* 缩短高度使下端与状态指示器对齐 */
     overflow-y: auto;
 }
 
 .logs-header {
-    padding: 15px;
+    padding: 12px 15px;
     background-color: #e9ecef;
     border-bottom: 1px solid #dee2e6;
     display: flex;
@@ -533,7 +486,7 @@ body {
 }
 
 .logs-content {
-    padding: 15px;
+    padding: 12px;
 }
 
 .log-entry {
@@ -630,23 +583,19 @@ body {
         flex: none;
     }
 
-    .stats-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-
-    .stat-card {
-        padding: 12px;
-    }
-
-    .stat-value {
-        font-size: 1.5rem;
-    }
-
     .chart-controls {
         flex-direction: column;
         align-items: stretch;
         gap: 15px;
+    }
+
+    .continuous-time-display {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .continuous-time-item {
+        justify-content: center;
     }
 
     .time-period-buttons {
