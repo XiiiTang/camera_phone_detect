@@ -107,19 +107,25 @@ class AppController {
 
     setupWebSocket() {
         this.dbService.onNewResponse = (data) => {
+            console.log('WebSocket: New response received, triggering stats update');
             this.addLogEntry(data);
-            // Trigger phone stats update when new response is received
+            // Trigger phone stats update when new AI response is received
+            // This is the primary mechanism for updating statistics
             this.phoneStats.triggerUpdate();
         };
 
         this.dbService.onClearResponses = () => {
+            console.log('WebSocket: Clear responses received, triggering stats update');
             this.clearLogDisplay();
             // Trigger phone stats update when responses are cleared
             this.phoneStats.triggerUpdate();
         };
 
         this.dbService.onConnectionChange = (isConnected) => {
+            console.log('WebSocket: Connection change:', isConnected);
             this.updateConnectionStatus(isConnected);
+            // Don't trigger stats update on connection change
+            // Stats will be updated when new responses arrive
         };
 
         this.dbService.connectWebSocket();
@@ -204,13 +210,16 @@ class AppController {
             this.isProcessing = true;
             this.elements.startButton.textContent = 'Pause Processing';
             this.elements.startButton.className = 'btn btn-warning';
-            
+
             // Disable controls
             this.elements.cameraSelect.disabled = true;
             this.elements.setDefaultCameraButton.disabled = true;
             this.elements.intervalSelect.disabled = true;
             this.elements.questionInput.disabled = true;
             this.elements.aiURLInput.disabled = true;
+
+            // Notify phone stats service that processing has started (not paused)
+            this.phoneStats.setPaused(false);
 
             this.updateStatus('Processing started...', 'info');
             
@@ -239,7 +248,7 @@ class AppController {
 
     pauseProcessing() {
         this.isProcessing = false;
-        
+
         if (this.processingInterval) {
             clearInterval(this.processingInterval);
             this.processingInterval = null;
@@ -248,9 +257,12 @@ class AppController {
         // Stop camera completely
         this.camera.stopCamera();
 
+        // Notify phone stats service that processing is paused
+        this.phoneStats.setPaused(true);
+
         this.elements.startButton.textContent = 'Start Processing';
         this.elements.startButton.className = 'btn btn-success';
-        
+
         // Enable controls
         this.elements.cameraSelect.disabled = false;
         this.elements.setDefaultCameraButton.disabled = false;
@@ -282,8 +294,9 @@ class AppController {
             }
 
             const result = await this.aiService.sendChatCompletion(question, imageData);
-            
-            // Save to database
+
+            // Save to database - this will trigger WebSocket notification
+            // which will automatically update phone stats via onNewResponse
             await this.dbService.saveResponse(
                 question,
                 result.response,
@@ -292,7 +305,7 @@ class AppController {
             );
 
             this.updateStatus(`Response: ${result.response}`, 'success');
-            
+
         } catch (error) {
             console.error('Processing error:', error);
             this.updateStatus(`Processing error: ${error.message}`, 'error');

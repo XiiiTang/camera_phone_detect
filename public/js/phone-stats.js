@@ -2,29 +2,31 @@ class PhoneStatsService {
     constructor(databaseService) {
         this.databaseService = databaseService;
         this.updateInterval = null;
-        this.updateFrequency = 5000; // Update every 5 seconds
-        
+        this.updateFrequency = 5000; // Update every 5 seconds (only when not paused)
+
+        // Pause state management
+        this.isPaused = true; // Start in paused state when frontend opens
+
+        // Prevent duplicate updates
+        this.isUpdating = false;
+        this.lastUpdateTime = 0;
+        this.minUpdateInterval = 1000; // Minimum 1 second between updates
+
         // DOM elements
         this.continuousPhoneTimeElement = document.getElementById('continuousPhoneTime');
         this.continuousNoPhoneTimeElement = document.getElementById('continuousNoPhoneTime');
         this.lastUpdateTimeElement = document.getElementById('lastUpdateTime');
         this.lastResponseElement = document.getElementById('lastResponse');
-        
+
         // Stat cards for visual feedback
         this.phoneStatCard = document.querySelector('.stat-phone');
         this.noPhoneStatCard = document.querySelector('.stat-no-phone');
     }
 
     start() {
-        // Initial update
-        this.updateStats();
-        
-        // Set up periodic updates
-        this.updateInterval = setInterval(() => {
-            this.updateStats();
-        }, this.updateFrequency);
-        
-        console.log('Phone stats service started');
+        // Don't do initial update - wait for first AI response
+        // This prevents unnecessary API calls on startup
+        console.log('Phone stats service started (waiting for AI responses)');
     }
 
     stop() {
@@ -36,14 +38,28 @@ class PhoneStatsService {
     }
 
     async updateStats() {
+        // Prevent duplicate updates
+        const now = Date.now();
+        if (this.isUpdating || (now - this.lastUpdateTime) < this.minUpdateInterval) {
+            console.log('Phone stats update skipped (too frequent or already updating)');
+            return;
+        }
+
+        this.isUpdating = true;
+        this.lastUpdateTime = now;
+
         try {
-            console.log('Updating phone stats...');
+            // Add stack trace to identify caller
+            const stack = new Error().stack;
+            console.log('Updating phone stats... Called from:', stack.split('\n')[2].trim());
             const stats = await this.databaseService.getPhoneStats();
             console.log('Received stats:', stats);
             this.displayStats(stats);
         } catch (error) {
             console.error('Error updating phone stats:', error);
             this.displayError();
+        } finally {
+            this.isUpdating = false;
         }
     }
 
@@ -53,35 +69,46 @@ class PhoneStatsService {
             return;
         }
 
-        // Update time values
-        const phoneTime = this.formatTime(stats.currentContinuousPhoneTime);
-        const noPhoneTime = this.formatTime(stats.currentContinuousNoPhoneTime);
-        
+        // If paused, force continuous time to display as 0
+        let phoneTime, noPhoneTime;
+        if (this.isPaused) {
+            phoneTime = this.formatTime(0);
+            noPhoneTime = this.formatTime(0);
+        } else {
+            phoneTime = this.formatTime(stats.currentContinuousPhoneTime);
+            noPhoneTime = this.formatTime(stats.currentContinuousNoPhoneTime);
+        }
+
         this.continuousPhoneTimeElement.textContent = phoneTime;
         this.continuousNoPhoneTimeElement.textContent = noPhoneTime;
-        
+
         // Update last response info
         if (stats.lastResponse) {
             this.lastResponseElement.textContent = `最后响应: ${stats.lastResponse}`;
         }
-        
+
         if (stats.lastTimestamp) {
             // Format as UTC+8 time with consistent format
             const utc8TimeString = this.formatUTC8Time(stats.lastTimestamp);
             this.lastUpdateTimeElement.textContent = `最后更新: ${utc8TimeString}`;
         }
-        
-        // Update visual indicators
+
+        // Update visual indicators - also consider pause state
         this.updateVisualIndicators(stats);
-        
-        console.log('Phone stats updated:', stats);
+
+        console.log('Phone stats updated:', stats, 'isPaused:', this.isPaused);
     }
 
     updateVisualIndicators(stats) {
         // Remove active classes
         this.phoneStatCard.classList.remove('active');
         this.noPhoneStatCard.classList.remove('active');
-        
+
+        // If paused, don't show any active indicators
+        if (this.isPaused) {
+            return;
+        }
+
         // Add active class based on current state
         if (stats.currentContinuousPhoneTime > 0) {
             this.phoneStatCard.classList.add('active');
@@ -168,9 +195,52 @@ class PhoneStatsService {
         this.noPhoneStatCard.classList.remove('active');
     }
 
-    // Method to trigger immediate update (can be called when new response is received)
+    // Method to trigger immediate update (called when new AI response is received)
     triggerUpdate() {
-        this.updateStats();
+        // Only update if not paused - this is the primary update mechanism
+        if (!this.isPaused) {
+            this.updateStats();
+        } else {
+            console.log('Phone stats update skipped (paused)');
+        }
+    }
+
+    // Method to set pause state
+    setPaused(isPaused) {
+        this.isPaused = isPaused;
+        console.log('Phone stats service pause state changed:', isPaused);
+
+        if (isPaused) {
+            // Stop any periodic updates when paused
+            if (this.updateInterval) {
+                clearInterval(this.updateInterval);
+                this.updateInterval = null;
+            }
+            // Force display to show 0 when paused
+            this.displayPausedState();
+        } else {
+            // When unpaused, don't start periodic updates
+            // Statistics will be updated only when AI responses arrive
+            // This ensures updates are completely response-driven
+            console.log('Phone stats service unpaused - waiting for AI responses');
+        }
+    }
+
+    // Display paused state without making API call
+    displayPausedState() {
+        this.continuousPhoneTimeElement.textContent = this.formatTime(0);
+        this.continuousNoPhoneTimeElement.textContent = this.formatTime(0);
+
+        // Remove active classes
+        this.phoneStatCard.classList.remove('active');
+        this.noPhoneStatCard.classList.remove('active');
+
+        console.log('Phone stats display set to paused state');
+    }
+
+    // Method to check if currently paused
+    isPausedState() {
+        return this.isPaused;
     }
 }
 
