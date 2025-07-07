@@ -15,7 +15,6 @@ class ChartService {
         this.todayBtn = document.getElementById('todayBtn');
         this.weekBtn = document.getElementById('weekBtn');
         this.monthBtn = document.getElementById('monthBtn');
-        this.refreshBtn = document.getElementById('refreshChartBtn');
         
         // Statistics elements
         this.totalPhoneTimeElement = document.getElementById('totalPhoneTime');
@@ -30,9 +29,6 @@ class ChartService {
         this.todayBtn.addEventListener('click', () => this.switchPeriod('today'));
         this.weekBtn.addEventListener('click', () => this.switchPeriod('week'));
         this.monthBtn.addEventListener('click', () => this.switchPeriod('month'));
-        
-        // Refresh button
-        this.refreshBtn.addEventListener('click', () => this.refreshChart());
     }
     
     switchPeriod(period) {
@@ -166,10 +162,7 @@ class ChartService {
                             }
                         }
                     },
-                    animation: {
-                        duration: 1000,
-                        easing: 'easeInOutQuart'
-                    },
+                    animation: false,
                     onClick: (event, elements) => {
                         if (elements.length > 0) {
                             const element = elements[0];
@@ -329,9 +322,16 @@ class ChartService {
     // Method to refresh chart (called when new AI response is received)
     refreshChart() {
         console.log('Refreshing chart data...');
-        this.loadChartData();
+        // Only refresh if current period is 'today'
+        // Weekly and monthly views should only refresh on view switch
+        if (this.currentPeriod === 'today') {
+            console.log('Auto-refreshing daily view due to AI response');
+            this.loadChartData();
+        } else {
+            console.log(`Skipping auto-refresh for ${this.currentPeriod} view - only refreshes on view switch`);
+        }
     }
-    
+
     // Initialize chart with default period
     initialize() {
         this.loadChartData();

@@ -15,8 +15,6 @@ class PhoneStatsService {
         // DOM elements
         this.continuousPhoneTimeElement = document.getElementById('continuousPhoneTime');
         this.continuousNoPhoneTimeElement = document.getElementById('continuousNoPhoneTime');
-        this.lastUpdateTimeElement = document.getElementById('lastUpdateTime');
-        this.lastResponseElement = document.getElementById('lastResponse');
 
         // Stat cards for visual feedback
         this.phoneStatCard = document.querySelector('.stat-phone');
@@ -81,17 +79,6 @@ class PhoneStatsService {
 
         this.continuousPhoneTimeElement.textContent = phoneTime;
         this.continuousNoPhoneTimeElement.textContent = noPhoneTime;
-
-        // Update last response info
-        if (stats.lastResponse) {
-            this.lastResponseElement.textContent = `最后响应: ${stats.lastResponse}`;
-        }
-
-        if (stats.lastTimestamp) {
-            // Format as UTC+8 time with consistent format
-            const utc8TimeString = this.formatUTC8Time(stats.lastTimestamp);
-            this.lastUpdateTimeElement.textContent = `最后更新: ${utc8TimeString}`;
-        }
 
         // Update visual indicators - also consider pause state
         this.updateVisualIndicators(stats);
@@ -187,9 +174,7 @@ class PhoneStatsService {
     displayError() {
         this.continuousPhoneTimeElement.textContent = '--';
         this.continuousNoPhoneTimeElement.textContent = '--';
-        this.lastUpdateTimeElement.textContent = '最后更新: 获取数据失败';
-        this.lastResponseElement.textContent = '最后响应: --';
-        
+
         // Remove active classes
         this.phoneStatCard.classList.remove('active');
         this.noPhoneStatCard.classList.remove('active');

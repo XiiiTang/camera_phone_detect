@@ -371,15 +371,13 @@ function generateTodayChartData(rows) {
                 label: '没看手机',
                 data: hourlyData.map(d => d.noPhoneTime),
                 backgroundColor: '#FFE4B5', // Light orange
-                borderColor: '#FFA500',
-                borderWidth: 1
+                borderWidth: 0
             },
             {
                 label: '看手机',
                 data: hourlyData.map(d => d.phoneTime),
                 backgroundColor: '#20B2AA', // Teal
-                borderColor: '#008B8B',
-                borderWidth: 1
+                borderWidth: 0
             }
         ],
         statistics: {
