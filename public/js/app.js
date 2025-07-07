@@ -32,7 +32,7 @@ class AppController {
             // Initialize chart service
             this.chartService.initialize();
 
-            this.updateStatus('Camera initialized successfully', 'success');
+            this.updateStatus('Camera initialized successfully - Click "Start Processing" to begin', 'success');
         } catch (error) {
             this.updateStatus(`Initialization failed: ${error.message}`, 'error');
         }
@@ -139,13 +139,13 @@ class AppController {
 
     async initializeCamera() {
         const initialized = await this.camera.init(this.elements.video, this.elements.canvas);
-        
+
         if (!initialized) {
             throw new Error('Camera initialization failed');
         }
 
         await this.populateCameraSelect();
-        await this.camera.startCamera();
+        // Don't start camera automatically - only start when user clicks "Start Processing"
         this.updateVideoOverlay();
     }
 
@@ -171,9 +171,9 @@ class AppController {
             select.appendChild(option);
         });
 
-        // If default camera is set, start with that camera
+        // If default camera is set, set it as current device but don't start camera
         if (defaultCameraId && devices.find(d => d.deviceId === defaultCameraId)) {
-            await this.switchCamera(defaultCameraId);
+            this.camera.currentDeviceId = defaultCameraId;
         }
     }
 
