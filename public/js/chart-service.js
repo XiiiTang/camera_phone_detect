@@ -137,6 +137,7 @@ class ChartService {
                     maintainAspectRatio: false,
                     scales: {
                         x: {
+                            stacked: true,
                             title: {
                                 display: true,
                                 text: '时间 (小时)'
